@@ -25,7 +25,7 @@ export async function apiKeyAuth(req: Request, res: Response, next: NextFunction
         id: true,
         projectId: true,
         revokedAt: true,
-        project: { select: { id: true, name: true } }
+        project: { select: { id: true, name: true, createdAt: true } }
       }
     });
 
