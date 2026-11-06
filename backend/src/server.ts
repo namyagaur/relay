@@ -82,4 +82,5 @@ if (require.main === module) {
   process.on("SIGINT", onSignal);
 }
 
-export default server;
+export { server };
+export default app;
