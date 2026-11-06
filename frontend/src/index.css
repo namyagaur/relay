@@ -1,0 +1,259 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400..500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Surfaces — warm paper canvas, violet-tinted neutrals */
+    --background: 48 20% 95.1%; /* #F5F4F0 */
+    --foreground: 247 10% 15.5%; /* #24232B */
+    --surface: 0 0% 100%; /* #FFFFFF */
+    --elevated: 270 6% 93.7%; /* #EFEEF0 */
+
+    --card: 0 0% 100%;
+    --card-foreground: 247 10% 15.5%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 247 10% 15.5%;
+    --primary: 247 67% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 270 6% 93.7%; /* #EFEEF0 */
+    --secondary-foreground: 247 10% 20%;
+    --muted: 270 6% 93.7%;
+    --muted-foreground: 252 5% 42%; /* secondary text, tuned for AA on tinted surfaces */
+    --accent: 270 7% 92.4%;
+    --accent-foreground: 247 10% 15.5%;
+    --destructive: 3 47% 47%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 270 8% 90.6%; /* #E7E5E9 */
+    --input: 257 10% 86.1%;
+    --ring: 247 67% 60%;
+
+    --brand: 247 67% 60%; /* #6555DE */
+    --brand-foreground: 0 0% 100%;
+    --brand-soft: 250 100% 96.3%; /* #EFECFF */
+    --brand-hover: 248 55% 54%; /* #5B4ACB */
+
+    --success: 156 41% 31%; /* muted emerald #2F6F55 */
+    --success-soft: 150 28% 92.9%;
+    --warning: 40 75% 31%; /* warm amber #8C6414 */
+    --warning-soft: 40 75% 92.2%;
+    --danger: 3 47% 47%; /* refined coral #B0453F */
+    --danger-soft: 6 71% 94.5%;
+
+    --info: 233 50% 54%; /* lavender-indigo #4E5BC4 */
+    --info-soft: 233 68% 95.1%;
+
+    --chart-1: 247 67% 60%;
+    --chart-2: 156 41% 38%;
+    --chart-3: 40 72% 45%;
+    --chart-4: 233 50% 54%;
+    --chart-5: 3 47% 47%;
+
+    --radius: 0.5rem;
+    --font-heading: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-body: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-display: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    --sidebar-background: 270 6% 93.5%; /* cooler grey beside the warm canvas */
+    --sidebar-foreground: 247 9% 32%;
+    --sidebar-primary: 247 67% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 270 7% 89.5%;
+    --sidebar-accent-foreground: 247 10% 15.5%;
+    --sidebar-border: 270 7% 88%;
+    --sidebar-ring: 247 67% 60%;
+  }
+
+  .dark {
+    /* Dark is designed, not inverted — layered cool greys */
+    --background: 240 13% 7.6%; /* #111116 */
+    --foreground: 257 33% 95.9%; /* #F3F1F8 */
+    --surface: 247 14% 12.4%; /* #1C1B24 */
+    --elevated: 246 14% 15.9%; /* #24232E */
+
+    --card: 247 14% 12.4%;
+    --card-foreground: 257 33% 95.9%;
+    --popover: 246 14% 15.3%;
+    --popover-foreground: 257 33% 95.9%;
+    --primary: 248 100% 77.3%;
+    --primary-foreground: 240 13% 7.6%;
+    --secondary: 246 14% 15.9%; /* #24232E */
+    --secondary-foreground: 257 33% 95.9%;
+    --muted: 246 13% 18.2%;
+    --muted-foreground: 255 9% 66.7%; /* #A6A2B2 */
+    --accent: 246 13% 19.4%;
+    --accent-foreground: 257 33% 96%;
+    --destructive: 4 73% 66.5%;
+    --destructive-foreground: 240 13% 8%;
+    --border: 250 11% 21.6%; /* #33313D */
+    --input: 249 11% 25.9%;
+    --ring: 248 100% 77.3%;
+
+    --brand: 248 100% 77.3%; /* #9A8BFF */
+    --brand-foreground: 240 13% 7.6%;
+    --brand-soft: 251 27% 19.4%; /* #29243F */
+    --brand-hover: 247 100% 82.4%; /* #B0A5FF */
+
+    --success: 153 48% 62%; /* muted emerald */
+    --success-soft: 153 24% 14.9%;
+    --warning: 37 75% 64%; /* warm amber */
+    --warning-soft: 36 33% 15.1%;
+    --danger: 4 73% 66.5%; /* refined coral */
+    --danger-soft: 5 26% 18%;
+
+    --info: 234 77% 78%; /* lavender-indigo */
+    --info-soft: 235 25% 19%;
+
+    --chart-1: 248 100% 77%;
+    --chart-2: 153 48% 62%;
+    --chart-3: 37 75% 64%;
+    --chart-4: 234 77% 78%;
+    --chart-5: 4 73% 67%;
+
+    --sidebar-background: 240 13% 9.2%; /* lifts off the #111116 canvas */
+    --sidebar-foreground: 257 20% 88%;
+    --sidebar-primary: 248 100% 77.3%;
+    --sidebar-primary-foreground: 240 13% 8%;
+    --sidebar-accent: 246 14% 16.5%;
+    --sidebar-accent-foreground: 257 33% 96%;
+    --sidebar-border: 250 11% 19.5%;
+    --sidebar-ring: 248 100% 77.3%;
+  }
+
+  .auth-page {
+    color-scheme: light;
+    --background: 48 20% 95.1%;
+    --foreground: 247 10% 15.5%;
+    --surface: 0 0% 100%;
+    --card: 0 0% 100%;
+    --card-foreground: 247 10% 15.5%;
+    --primary: 247 67% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 270 6% 93.7%;
+    --secondary-foreground: 247 10% 20%;
+    --muted: 270 6% 93.7%;
+    --muted-foreground: 252 5% 42%;
+    --border: 270 8% 90.6%;
+    --input: 257 10% 86.1%;
+    --ring: 247 67% 60%;
+    --brand: 247 67% 60%;
+    --brand-foreground: 0 0% 100%;
+    --brand-soft: 250 100% 96.3%;
+    --brand-hover: 248 55% 54%;
+    --destructive: 3 47% 47%;
+    --destructive-foreground: 0 0% 100%;
+    --warning: 40 75% 31%;
+    --warning-soft: 40 75% 92.2%;
+    --danger-soft: 6 71% 94.5%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    color-scheme: light;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background font-body text-foreground antialiased;
+    font-feature-settings: 'ss01' 1;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-heading;
+    letter-spacing: -0.021em;
+  }
+
+  code,
+  kbd,
+  samp,
+  pre {
+    @apply font-mono;
+  }
+
+  ::selection {
+    background: hsl(var(--brand) / 0.18);
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--brand) / 0.5);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 999px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* One hairline shadow, used only to lift a surface off the canvas. */
+  .surface-shadow {
+    box-shadow:
+      0 1px 2px hsl(250 18% 14% / 0.045),
+      0 1px 1px hsl(250 18% 14% / 0.03);
+  }
+
+  .dark .surface-shadow {
+    box-shadow:
+      0 1px 2px hsl(0 0% 0% / 0.35),
+      0 0 0 1px hsl(0 0% 100% / 0.02);
+  }
+
+  /* Floating layers (menus, palettes). */
+  .pop-shadow {
+    box-shadow:
+      0 12px 34px -14px hsl(250 22% 12% / 0.28),
+      0 2px 6px -2px hsl(250 22% 12% / 0.12);
+  }
+
+  .dark .pop-shadow {
+    box-shadow:
+      0 16px 40px -16px hsl(0 0% 0% / 0.72),
+      0 0 0 1px hsl(0 0% 100% / 0.04);
+  }
+
+  .hairline-t {
+    border-top: 1px solid hsl(var(--border) / 0.7);
+  }
+
+  .hairline-b {
+    border-bottom: 1px solid hsl(var(--border) / 0.7);
+  }
+}
