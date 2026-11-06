@@ -4,6 +4,7 @@ declare global {
       authenticatedProject?: {
         id: string;
         name: string;
+        createdAt: Date;
       };
       authenticatedApiKeyId?: string;
     }
