@@ -27,6 +27,15 @@ export async function createProjectApiKey(projectId: string, name: string) {
   return { ...record, apiKey };
 }
 
+export async function listProjectApiKeys(projectId: string, currentApiKeyId: string) {
+  const keys = await prisma.apiKey.findMany({
+    where: { projectId },
+    select: { id: true, name: true, createdAt: true, lastUsedAt: true, revokedAt: true },
+    orderBy: { createdAt: "desc" }
+  });
+  return keys.map((key) => ({ ...key, isCurrent: key.id === currentApiKeyId }));
+}
+
 export async function revokeProjectApiKey(projectId: string, id: string): Promise<boolean> {
   const result = await prisma.apiKey.updateMany({
     where: { id, projectId, revokedAt: null },
