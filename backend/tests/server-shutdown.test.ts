@@ -48,5 +48,13 @@ describe("API Graceful Shutdown", () => {
     expect(closeCallCount).toBe(1);
     expect(mockDisconnect).toHaveBeenCalledTimes(1);
   });
+
+  it("exports the Express application as default without invoking an HTTP listener", async () => {
+    const { default: serverDefault } = await import("../src/server");
+    expect(typeof serverDefault).toBe("function");
+    // Verify it is an Express application instance
+    expect(typeof serverDefault.use).toBe("function");
+    expect(typeof serverDefault.listen).toBe("function");
+  });
 });
 
