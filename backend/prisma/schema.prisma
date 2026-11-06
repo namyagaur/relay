@@ -1,0 +1,160 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Project {
+  id        String     @id @default(uuid()) @db.Uuid
+  name      String
+  createdAt DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime   @updatedAt @db.Timestamptz(6)
+  apiKeys   ApiKey[]
+  endpoints Endpoint[]
+  events    Event[]
+
+  @@map("projects")
+}
+
+model ApiKey {
+  id         String    @id @default(uuid()) @db.Uuid
+  projectId  String    @db.Uuid
+  name       String
+  keyHash    String    @unique
+  lastUsedAt DateTime? @db.Timestamptz(6)
+  revokedAt  DateTime? @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("api_keys")
+}
+
+model Endpoint {
+  id              String                @id @default(uuid()) @db.Uuid
+  projectId       String                @db.Uuid
+  url             String
+  description     String?
+  encryptedSecret String
+  isActive        Boolean               @default(true)
+  deletedAt       DateTime?             @db.Timestamptz(6)
+  createdAt       DateTime              @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime              @updatedAt @db.Timestamptz(6)
+  project         Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  attempts        DeliveryAttempt[]
+  deliveryTargets DeliveryTarget[]
+  replayTargets   ReplayRequestTarget[]
+
+  @@index([projectId, isActive, deletedAt])
+  @@map("endpoints")
+}
+
+model Event {
+  id              String            @id @default(uuid()) @db.Uuid
+  projectId       String            @db.Uuid
+  idempotencyKey  String?
+  eventType       String
+  payload         Json              @db.JsonB
+  status          String            @default("pending")
+  createdAt       DateTime          @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime          @updatedAt @db.Timestamptz(6)
+  project         Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  attempts        DeliveryAttempt[]
+  deliveryTargets DeliveryTarget[]
+  replayRequests  ReplayRequest[]
+  outboxMessage   OutboxMessage?
+
+  @@unique([projectId, idempotencyKey])
+  @@index([projectId, status, createdAt])
+  @@map("events")
+}
+
+model DeliveryAttempt {
+  id                 String         @id @default(uuid()) @db.Uuid
+  eventId            String         @db.Uuid
+  endpointId         String         @db.Uuid
+  attemptNumber      Int
+  status             String
+  responseStatusCode Int?
+  responseBody       String?        @db.Text
+  errorMessage       String?        @db.Text
+  durationMs         Int?
+  attemptedAt        DateTime       @default(now()) @db.Timestamptz(6)
+  event              Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  endpoint           Endpoint       @relation(fields: [endpointId], references: [id], onDelete: Restrict)
+  replayRequestId    String?        @db.Uuid
+  replayRequest      ReplayRequest? @relation(fields: [replayRequestId], references: [id], onDelete: SetNull)
+
+  @@unique([eventId, endpointId, attemptNumber])
+  @@index([eventId, attemptedAt])
+  @@index([endpointId, attemptedAt])
+  @@map("delivery_attempts")
+}
+
+model OutboxMessage {
+  id                   String    @id @default(uuid()) @db.Uuid
+  eventId              String    @unique @db.Uuid
+  eventType            String
+  payload              Json      @db.JsonB
+  publishedAt          DateTime? @db.Timestamptz(6)
+  targetsSnapshottedAt DateTime? @db.Timestamptz(6)
+  createdAt            DateTime  @default(now()) @db.Timestamptz(6)
+  event                Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([publishedAt, createdAt])
+  @@map("outbox_messages")
+}
+
+model DeliveryTarget {
+  id         String   @id @default(uuid()) @db.Uuid
+  eventId    String   @db.Uuid
+  endpointId String   @db.Uuid
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+
+  event    Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  endpoint Endpoint @relation(fields: [endpointId], references: [id], onDelete: Restrict)
+
+  @@unique([eventId, endpointId])
+  @@index([endpointId])
+  @@map("delivery_targets")
+}
+
+model ReplayRequest {
+  id          String                @id @default(uuid()) @db.Uuid
+  eventId     String                @db.Uuid
+  status      String                @default("pending")
+  createdAt   DateTime              @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime              @updatedAt @db.Timestamptz(6)
+  startedAt   DateTime?             @db.Timestamptz(6)
+  completedAt DateTime?             @db.Timestamptz(6)
+  failedAt    DateTime?             @db.Timestamptz(6)
+  event       Event                 @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  targets     ReplayRequestTarget[]
+  attempts    DeliveryAttempt[]
+
+  @@index([eventId, createdAt])
+  @@index([status, createdAt])
+  @@map("replay_requests")
+}
+
+model ReplayRequestTarget {
+  id              String        @id @default(uuid()) @db.Uuid
+  replayRequestId String        @db.Uuid
+  endpointId      String        @db.Uuid
+  status          String        @default("pending")
+  createdAt       DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime      @updatedAt @db.Timestamptz(6)
+  startedAt       DateTime?     @db.Timestamptz(6)
+  completedAt     DateTime?     @db.Timestamptz(6)
+  replayRequest   ReplayRequest @relation(fields: [replayRequestId], references: [id], onDelete: Cascade)
+  endpoint        Endpoint      @relation(fields: [endpointId], references: [id], onDelete: Restrict)
+
+  @@unique([replayRequestId, endpointId])
+  @@index([replayRequestId, status])
+  @@index([endpointId])
+  @@map("replay_request_targets")
+}
