@@ -4,4 +4,4 @@ node_modules/
 !.env.example
 dist/
 coverage/
-src/generated/prisma/
+backend/src/generated/prisma/
