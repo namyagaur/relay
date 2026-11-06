@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   queueClose: vi.fn(),
   redisDisconnect: vi.fn(),
   redisOn: vi.fn(),
+  queueName: undefined as string | undefined,
   queueOptions: undefined as unknown,
   workerClose: vi.fn(),
   workerOptions: undefined as unknown,
@@ -28,7 +29,8 @@ vi.mock("ioredis", () => ({
 vi.mock("bullmq", () => ({
   UnrecoverableError: class extends Error {},
   Queue: class {
-    constructor(_name: string, options: unknown) {
+    constructor(name: string, options: unknown) {
+      mocks.queueName = name;
       mocks.queueOptions = options;
     }
     close() {
@@ -67,6 +69,7 @@ import { createDeliveryQueue, createDeliveryWorker } from "../src/queue/delivery
 describe("delivery queue lifecycle", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.queueName = undefined;
   });
 
   it("reuses its close promise and disconnects Redis after closing BullMQ", async () => {
@@ -93,6 +96,29 @@ describe("delivery queue lifecycle", () => {
     expect(mocks.redisDisconnect).toHaveBeenCalledOnce();
   });
 
+  it("rejects custom queue names outside the test environment", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    try {
+      expect(() => createDeliveryQueue("redis://localhost:6379", "relay-test-queue"))
+        .toThrow("Custom delivery queue names are only available in the test environment.");
+    } finally {
+      vi.unstubAllEnvs();
+    }
+    expect(mocks.queueName).toBeUndefined();
+  });
+
+  it("accepts a custom queue name in the test environment", async () => {
+    vi.stubEnv("NODE_ENV", "test");
+    mocks.queueClose.mockResolvedValue(undefined);
+    try {
+      const connection = createDeliveryQueue("redis://localhost:6379", "relay-test-queue");
+      expect(mocks.queueName).toBe("relay-test-queue");
+      await connection.close();
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("creates a dedicated worker with configured concurrency and closes it cleanly", async () => {
     mocks.workerClose.mockResolvedValue(undefined);
     mocks.failReplayTarget.mockResolvedValue(undefined);
@@ -105,6 +131,20 @@ describe("delivery queue lifecycle", () => {
     await deliveryWorker.close();
     expect(mocks.workerClose).toHaveBeenCalledOnce();
     expect(mocks.redisDisconnect).toHaveBeenCalledOnce();
+  });
+
+  it("rejects test delivery overrides outside the test environment", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    try {
+      expect(() => createDeliveryWorker({
+        redisUrl: "redis://localhost:6379",
+        requestTimeoutMs: 5000,
+        concurrency: 1,
+        testDeliveryOverrides: { validateTarget: vi.fn() }
+      })).toThrow("Test delivery overrides are only available in the test environment.");
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("marks replay targets failed when a delivery job exhausts its retries", async () => {
