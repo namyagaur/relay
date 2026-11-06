@@ -7,12 +7,13 @@
     "test": "vitest run tests",
     "test:integration": "vitest run integration --fileParallelism=false",
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
+    "build": "prisma generate && tsc",
     "start": "node dist/server.js",
     "start:outbox": "node dist/outbox-dispatcher.js",
     "start:delivery-worker": "node dist/delivery-worker.js",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy"
   },
   "keywords": [],
   "author": "",
