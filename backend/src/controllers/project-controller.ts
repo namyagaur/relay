@@ -1,6 +1,11 @@
 import type { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { createProject, createProjectApiKey, revokeProjectApiKey } from "../services/project-service";
+import {
+  createProject,
+  createProjectApiKey,
+  listProjectApiKeys,
+  revokeProjectApiKey
+} from "../services/project-service";
 
 const createProjectSchema = z.object({
   name: z.string().trim().min(1).max(120)
@@ -33,6 +38,32 @@ export async function createApiKeyController(req: Request, res: Response, next: 
   try {
     const apiKey = await createProjectApiKey(req.authenticatedProject.id, parsed.data.name);
     res.status(201).json(apiKey);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function currentProjectController(req: Request, res: Response): Promise<void> {
+  if (!req.authenticatedProject || !req.authenticatedApiKeyId) {
+    res.status(401).json({ error: { code: "UNAUTHORIZED", message: "A valid bearer API key is required." } });
+    return;
+  }
+  res.status(200).json({
+    project: req.authenticatedProject,
+    apiKeyId: req.authenticatedApiKeyId
+  });
+}
+
+export async function listApiKeysController(req: Request, res: Response, next: NextFunction): Promise<void> {
+  const projectId = req.authenticatedProject?.id;
+  const apiKeyId = req.authenticatedApiKeyId;
+  if (!projectId || !apiKeyId) {
+    res.status(401).json({ error: { code: "UNAUTHORIZED", message: "A valid bearer API key is required." } });
+    return;
+  }
+
+  try {
+    res.status(200).json({ data: await listProjectApiKeys(projectId, apiKeyId) });
   } catch (error) {
     next(error);
   }
