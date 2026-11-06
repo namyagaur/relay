@@ -1,6 +1,8 @@
-﻿import express from "express";
+import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import { getCorsOptions } from "./config/cors";
+import { prisma } from "./config/prisma";
 import { openApiSpec } from "./docs/openapi";
 import apiV1Router from "./routes/api-v1";
 
@@ -8,7 +10,7 @@ const app = express();
 
 // Security and request middleware
 app.use(helmet());
-app.use(cors());
+app.use(cors(getCorsOptions()));
 app.use(express.json({ limit: "1mb" }));
 
 function escapeHtml(value: string): string {
@@ -55,12 +57,35 @@ app.get("/api/docs", (_req, res) => {
 
 app.use("/api/v1", apiV1Router);
 
-// Health check endpoint
-app.get("/health", (_req, res) => {
+// Health check endpoints: liveness and readiness
+app.get(["/health", "/health/live"], (_req, res) => {
   res.status(200).json({
     status: "ok",
     service: "relay"
   });
+});
+
+app.get(["/health/ready", "/ready"], async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.status(200).json({
+      status: "ready",
+      service: "relay",
+      checks: {
+        database: "connected"
+      }
+    });
+  } catch (error) {
+    console.error("Readiness check failed:", error);
+    res.status(503).json({
+      status: "unavailable",
+      service: "relay",
+      checks: {
+        database: "disconnected"
+      },
+      error: "Database connectivity check failed."
+    });
+  }
 });
 
 app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
