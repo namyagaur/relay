@@ -3,6 +3,7 @@ import request, { type Test } from "supertest";
 
 const mocks = vi.hoisted(() => ({
   apiKeyFindUnique: vi.fn(),
+  apiKeyFindMany: vi.fn(),
   apiKeyUpdateMany: vi.fn(),
   apiKeyCreate: vi.fn(),
   projectCreate: vi.fn(),
@@ -31,6 +32,7 @@ vi.mock("../src/config/prisma", () => ({
   prisma: {
     apiKey: {
       findUnique: mocks.apiKeyFindUnique,
+      findMany: mocks.apiKeyFindMany,
       updateMany: mocks.apiKeyUpdateMany,
       create: mocks.apiKeyCreate
     },
@@ -200,6 +202,43 @@ describe("API key authentication and project management", () => {
     expect(response.status).toBe(204);
     expect(mocks.apiKeyUpdateMany).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: endpoint.id, projectId: project.id, revokedAt: null }
+    }));
+  });
+
+  it("returns authenticated project context without exposing key material", async () => {
+    const response = await authenticate(request(app).get("/api/v1/auth/session"));
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      project,
+      apiKeyId: "33333333-3333-4333-8333-333333333333"
+    });
+    expect(JSON.stringify(response.body)).not.toContain(rawKey);
+  });
+
+  it("lists project key metadata without returning hashes or raw keys", async () => {
+    mocks.apiKeyFindMany.mockResolvedValue([{
+      id: "33333333-3333-4333-8333-333333333333",
+      name: "primary",
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+      lastUsedAt: null,
+      revokedAt: null
+    }]);
+
+    const response = await authenticate(request(app).get("/api/v1/api-keys"));
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0]).toMatchObject({
+      id: "33333333-3333-4333-8333-333333333333",
+      name: "primary",
+      isCurrent: true
+    });
+    expect(JSON.stringify(response.body)).not.toContain(rawKey);
+    expect(JSON.stringify(response.body)).not.toContain("keyHash");
+    expect(mocks.apiKeyFindMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { projectId: project.id },
+      select: expect.not.objectContaining({ keyHash: true })
     }));
   });
 });
@@ -844,7 +883,7 @@ describe("delivery management API", () => {
       select: expect.objectContaining({
         replayRequestId: true,
         event: { select: { id: true, eventType: true } },
-        endpoint: { select: { id: true } }
+        endpoint: { select: { id: true, url: true } }
       })
     }));
     expect(response.body.data[0].replayRequestId).toBe(replayRequestId);
@@ -908,7 +947,12 @@ describe("delivery management API", () => {
     const detail = {
       ...attempt,
       responseBody: "Unavailable",
-      event: { ...attempt.event, status: "failed", createdAt: new Date("2026-01-01T00:00:00Z") },
+      event: {
+        ...attempt.event,
+        status: "failed",
+        createdAt: new Date("2026-01-01T00:00:00Z"),
+        payload: event.payload
+      },
       endpoint: {
         id: endpointId,
         url: endpoint.url,
@@ -918,17 +962,26 @@ describe("delivery management API", () => {
       }
     };
     mocks.deliveryAttemptFindFirst.mockResolvedValue(detail);
+    mocks.deliveryAttemptFindMany.mockResolvedValue([]);
 
     const response = await request(app).get(`/api/v1/deliveries/${deliveryId}`)
       .set("Authorization", `Bearer ${rawKey}`);
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual(JSON.parse(JSON.stringify(detail)));
+    expect(response.body).toEqual(JSON.parse(JSON.stringify({ ...detail, attempts: [] })));
     expect(mocks.deliveryAttemptFindFirst).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: deliveryId, event: { projectId: project.id } },
       select: expect.objectContaining({
         replayRequestId: true,
-        event: { select: { id: true, eventType: true, status: true, createdAt: true } },
+        event: {
+          select: expect.objectContaining({
+            id: true,
+            eventType: true,
+            status: true,
+            createdAt: true,
+            payload: true
+          })
+        },
         endpoint: {
           select: {
             id: true,
