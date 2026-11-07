@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Radio, RefreshCw } from 'lucide-react';
+import { Radio, RefreshCw, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EVENT_STATUSES, PAGE_SIZE_EVENTS, RANGES } from '@/constants/domain';
 import { formatNumber, relativeTime } from '@/utils/format';
@@ -13,6 +13,7 @@ import FilterSelect from '@/components/shared/FilterSelect';
 import Pagination from '@/components/shared/Pagination';
 import ErrorState from '@/components/shared/ErrorState';
 import EventsTable from '@/components/events/EventsTable';
+import SendEventDialog from '@/components/events/SendEventDialog';
 import { Button } from '@/components/ui/button';
 
 export default function Events() {
@@ -25,6 +26,7 @@ export default function Events() {
   });
   const [sort, setSort] = useState({ key: 'created_at', dir: 'desc' });
   const [page, setPage] = useState(1);
+  const [sendDialogOpen, setSendDialogOpen] = useState(false);
 
   const update = (patch) => {
     setFilters((current) => ({ ...current, ...patch }));
@@ -69,7 +71,11 @@ export default function Events() {
       <PageHeader
         title="Events"
         description="Inspect and manage events received by Relay."
-        actions={
+        actions={<div className="flex items-center gap-2">
+          <Button size="sm" className="h-8 gap-1.5 text-[12.5px]" onClick={() => setSendDialogOpen(true)}>
+            <Send className="h-3.5 w-3.5" strokeWidth={1.75} />
+            Send event
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -80,7 +86,7 @@ export default function Events() {
             <RefreshCw className={cn('h-3.5 w-3.5', isFetching && 'animate-spin')} strokeWidth={1.75} />
             Refresh
           </Button>
-        }
+        </div>}
       />
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -165,6 +171,7 @@ export default function Events() {
           Events are immutable once received. Replayed events create new delivery attempts.
         </div>
       )}
+      <SendEventDialog open={sendDialogOpen} onOpenChange={setSendDialogOpen} />
     </div>
   );
 }

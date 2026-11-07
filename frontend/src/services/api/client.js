@@ -10,6 +10,7 @@ let unauthorizedHandler = null;
  * @property {string} [method]
  * @property {Record<string, unknown>} [body]
  * @property {Record<string, string | number | boolean | null | undefined>} [query]
+ * @property {Record<string, string>} [headers]
  * @property {string} [apiKey]
  * @property {boolean} [authenticated]
  * @property {number} [timeoutMs]
@@ -60,7 +61,7 @@ function errorMessage(status, payload, apiKey) {
  */
 export async function request(
   path,
-  { method = 'GET', body, query, apiKey, authenticated = true, timeoutMs = 10000 } = {},
+  { method = 'GET', body, query, headers: requestHeaders, apiKey, authenticated = true, timeoutMs = 10000 } = {},
 ) {
   const params = new URLSearchParams();
   Object.entries(query ?? {}).forEach(([key, value]) => {
@@ -69,7 +70,8 @@ export async function request(
   const url = new URL(`${API_BASE_URL}${path}${params.size ? `?${params}` : ''}`, window.location.origin);
   const storedApiKey = authenticated && apiKey === undefined ? getStoredApiKey() : null;
   const credential = apiKey ?? storedApiKey;
-  const headers = { accept: 'application/json' };
+  /** @type {Record<string, string>} */
+  const headers = { accept: 'application/json', ...requestHeaders };
 
   if (credential) headers.authorization = `Bearer ${credential}`;
   if (body !== undefined) headers['content-type'] = 'application/json';

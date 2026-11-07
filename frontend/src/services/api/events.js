@@ -97,6 +97,14 @@ export async function getEvent(eventId) {
   };
 }
 
+export function createEvent({ eventType, payload, idempotencyKey }) {
+  return request('/events', {
+    method: 'POST',
+    body: { eventType, payload },
+    headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : undefined,
+  });
+}
+
 export function replayEvent(eventId) {
   return request(`/events/${encodeURIComponent(eventId)}/replay`, { method: 'POST' });
 }
